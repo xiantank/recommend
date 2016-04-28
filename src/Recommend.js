@@ -15,7 +15,7 @@ class Recommend {
 	 *
 	 * @param {String} query
 	 * @param {Number} maxSize
-	 * @return {Promise}
+	 * @return {Promise} results: GoogleSearchRecord[]
 	 */
 	makeQuery(query, maxSize) {
 		maxSize = maxSize || 64;
@@ -72,7 +72,7 @@ class Recommend {
 	/**
 	 *
 	 * @param {GoogleSearchRecord[]} records
-	 * @returns {}
+	 * @returns {Promise} results: string[][]
 	 */
 	getKeywords(records) {
 		var url = 'http://140.123.101.168:8080/~ycp104/segment/socket.php';
@@ -90,9 +90,27 @@ class Recommend {
 	}
 
 	getQuery(query, maxResult) {
-
+		return this.makeQuery(query, maxResult).then(results=> {
+			return this.getKeywords(results).then(keywords=> {
+				return results.map((record, index)=> {
+					record.keywords = keywords[index];
+					return record;
+				});
+			});
+		});
 	}
 
+	/** @typedef {object} Interest
+	 * @property {string[]} keywords
+	 * @property {string[]} subscribe
+	 * @property {string[]} tags
+	 * @property {string} userId
+	 */
+	/**
+	 *
+	 * @param userId
+	 * @returns {Interest}
+	 */
 	getInterest(userId) {
 		var uri = `http://tan.csie.io:2234/${userId}/personal/`;
 		return request(uri).then(body=>JSON.parse(body));
@@ -103,16 +121,17 @@ class Recommend {
 
 
 }
-/*let startTime = process.hrtime();
- let recommend = new Recommend();
- let query = "news";
- recommend.makeQuery(query, 64).then((results)=> {
+let startTime = process.hrtime();
+let recommend = new Recommend();
+let query = "news";
+recommend.getQuery(query, 64).catch(err=>console.error(err));
+/* recommend.makeQuery(query, 64).then((results)=> {
  console.log(JSON.stringify(results, null, 4));
  });
 
- process.on("exit", function () {
- let passTime = process.hrtime(startTime);
- console.log((passTime[0] * 1000 + passTime[1] / 1000000) + "ms");
- });
  */
+process.on("exit", function () {
+	let passTime = process.hrtime(startTime);
+	console.log((passTime[0] * 1000 + passTime[1] / 1000000) + "ms");
+});
 module.exports = Recommend;
