@@ -1,0 +1,17 @@
+{
+  "name": "recommemd",
+  "version": "0.0.1",
+  "description": "",
+  "main": "Recommend.js",
+  "scripts": {
+    "test": "mocha test/*"
+  },
+  "author": "xiantank",
+  "license": "MIT",
+  "dependencies": {
+    "request-promise": "^3.0.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0"
+  }
+}
