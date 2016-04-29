@@ -3,22 +3,23 @@
  */
 "use strict";
 var request = require("request-promise");
+var fs = require("fs");
 /**
  * @class
  */
 class Recommend {
-	constructor() {
+	constructor(options) {
+		options = options || {};
 		this.queryServer = "https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=8";
+		this.maxSearchSize = options.searchSize || 64;
 	}
 
 	/**
 	 *
 	 * @param {String} query
-	 * @param {Number} maxSize
 	 * @return {Promise} results: GoogleSearchRecord[]
 	 */
-	makeQuery(query, maxSize) {
-		maxSize = maxSize || 64;
+	makeQuery(query) {
 		let promiseArray = [];
 		let options = {
 			uri: '',
@@ -54,7 +55,7 @@ class Recommend {
 				}
 			}
 		};
-		for (let start = 0; start < maxSize; start += 8) {
+		for (let start = 0; start < this.maxSearchSize; start += 8) {
 			options.uri = `${this.queryServer}&start=${start}&q=${query}`;
 			promiseArray.push(request(options));
 		}
@@ -89,8 +90,8 @@ class Recommend {
 
 	}
 
-	getQuery(query, maxResult) {
-		return this.makeQuery(query, maxResult).then(results=> {
+	getQuery(query) {
+		return this.makeQuery(query).then(results=> {
 			return this.getKeywords(results).then(keywords=> {
 				return results.map((record, index)=> {
 					record.keywords = keywords[index];
@@ -116,7 +117,14 @@ class Recommend {
 		return request(uri).then(body=>JSON.parse(body));
 	}
 
-	rankResult() {
+	rankResult(userId, query) {
+		return Promise.all([
+			this.getQuery(query),
+			this.getInterest(userId)
+		]).then((results)=> {
+			let queryResult = results[0];
+			let interestList = results[1];
+		});
 	}
 
 
@@ -124,12 +132,10 @@ class Recommend {
 let startTime = process.hrtime();
 let recommend = new Recommend();
 let query = "news";
-recommend.getQuery(query, 64).catch(err=>console.error(err));
-/* recommend.makeQuery(query, 64).then((results)=> {
- console.log(JSON.stringify(results, null, 4));
- });
+let userId = "7pXOuoYL";
 
- */
+recommend.rankResult(userId, query);
+
 process.on("exit", function () {
 	let passTime = process.hrtime(startTime);
 	console.log((passTime[0] * 1000 + passTime[1] / 1000000) + "ms");
