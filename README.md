@@ -1,0 +1,1 @@
+[![Build Status](https://travis-ci.com/xiantank/recommend.svg?token=YStnRWVMF3eEY9ymwLWK&branch=master)](https://travis-ci.com/xiantank/recommend)
