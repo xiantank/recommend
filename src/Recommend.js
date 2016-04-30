@@ -40,7 +40,15 @@ class Recommend {
 					 * @property {null} responseDetails
 					 * @property {number} responseStatus
 					 */
-					let results = JSON.parse(body).responseData.results;
+
+					let results;
+					try {
+						results = JSON.parse(body).responseData.results;
+					}catch (e){
+						console.log(e);
+						console.log(body);
+						return;
+					}
 
 					return results.map(function (result) {
 						return {
@@ -55,14 +63,34 @@ class Recommend {
 				}
 			}
 		};
+
+		let requestUriArray = [];
+		let results = [];
+
 		for (let start = 0; start < this.maxSearchSize; start += 8) {
-			options.uri = `${this.queryServer}&start=${start}&q=${query}`;
-			promiseArray.push(request(options));
+			requestUriArray.push(`${this.queryServer}&start=${start}&q=${query}`);
 		}
-		return Promise.all(promiseArray).then(results=>results.reduce((p, r)=> {
-			if (!p || !r) return p || r;
-			return p.concat(r);
-		}));
+		let sequentialRequest = function(requestUriArray){
+			let targetUri = requestUriArray.shift();
+			if(targetUri){
+				options.uri = targetUri;
+				return request(options).then((record)=>{
+					results.push(record);
+					return sequentialRequest(requestUriArray);
+				}).catch(err=>{
+					console.error(err);
+					return sequentialRequest(requestUriArray);
+				});
+			}else{
+				return Promise.resolve(
+					results.reduce((p, r)=> {
+					if (!p || !r) return p || r;
+					return p.concat(r);
+				}));
+			}
+
+		};
+		return sequentialRequest(requestUriArray);
 	}
 
 	/** @typedef {object} GoogleSearchRecord
@@ -134,7 +162,7 @@ let recommend = new Recommend();
 let query = "news";
 let userId = "7pXOuoYL";
 
-recommend.rankResult(userId, query);
+//recommend.rankResult(userId, query);
 
 process.on("exit", function () {
 	let passTime = process.hrtime(startTime);
