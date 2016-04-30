@@ -4,7 +4,7 @@
   "description": "",
   "main": "Recommend.js",
   "scripts": {
-    "test": "mocha test/*"
+    "test": "./node_modules/mocha/bin/mocha test/*"
   },
   "author": "xiantank",
   "license": "MIT",
@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "mocha": "^2.4.5",
     "nock": "^8.0.0",
     "sinon": "^1.17.3"
   }
