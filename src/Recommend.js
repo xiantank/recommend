@@ -4,28 +4,42 @@
 "use strict";
 var request = require("request-promise");
 var fs = require("fs");
+var privateKey = require("../privateKey.json");
 /**
  * @class
  */
 class Recommend {
 	constructor(options) {
 		options = options || {};
-		this.queryServer = "https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=8";
-		this.maxSearchSize = options.searchSize || 64;
+		this.cseKey = privateKey.cseKey;
+		this.cseCx = privateKey.cseCx;
+		this.maxSearchSize = options.maxSearchSize || 40;
+		this.searchSize = options.searchSize || 8;
+		this.searchMethod = options.searchMethod || "googleWebSearchAPI";
 	}
-
-	/**
-	 *
-	 * @param {String} query
-	 * @return {Promise} results: GoogleSearchRecord[]
-	 */
-	makeQuery(query) {
-		let promiseArray = [];
-		let options = {
-			uri: '',
-			simple: false,
-			transform: function (body) {
-				try {
+	get searchAPI(){
+		let that = this;
+		let searchStrategy = {
+			/**
+			 * parsing google web search api return results (deprecate api)
+			 * @param body
+			 * @returns {GoogleSearchRecord[]}
+			 */
+			googleWebSearchAPI: {
+				makeRequestOptions: function (start, query) {
+					let options = {};
+					options.uri = "https://ajax.googleapis.com/ajax/services/search/web";
+					options.qs = {
+						v: "1.0",
+						rsz: "8",
+						start: start,
+						q: query
+					};
+					options.simple = false;
+					options.transform = this.transform;
+					return options;
+				},
+				transform: function (body) {
 					/** @typedef {object} json
 					 * @property {object} responseData
 					 * @property {object[]} responseData.results
@@ -44,10 +58,10 @@ class Recommend {
 					let results;
 					try {
 						results = JSON.parse(body).responseData.results;
-					}catch (e){
+					} catch (e) {
 						console.log(e);
 						console.log(body);
-						return;
+						return null;
 					}
 
 					return results.map(function (result) {
@@ -57,40 +71,64 @@ class Recommend {
 							content: result.content
 						};
 					});
-				} catch (err) {
-					console.error(err);
-					return null;
+
+				}
+			},
+			/**
+			 * parsing google web search api return results (deprecate api)
+			 * @param body
+			 * @returns {GoogleSearchRecord[]}
+			 */
+			googleCustomSearchAPI: {
+				makeRequestOptions: function (start, query) {
+					let options = {};
+					options.uri = "https://www.googleapis.com/customsearch/v1";
+					options.qs = {
+						fields: "searchInformation,items(title,htmlTitle,link,formattedUrl,snippet,htmlSnippet)",
+						key: that.cseKey,
+						cx: that.cseCx,
+						start: start+1,
+						q: query
+					};
+					options.simple = false;
+					options.transform = this.transform;
+					return options;
+				},
+				transform: function (body) {
+					/** @typedef {object} json
+					 * @property {object[]} items
+					 * @property {string} items.formattedUrl
+					 * @property {string} items.htmlSnippet
+					 * @property {string} items.htmlTitle
+					 * @property {string} items.link
+					 * @property {string} items.snippet
+					 * @property {string} items.title
+					 * @property {object} searchInformation
+					 * @property {string} searchInformation.formattedSearchTime
+					 * @property {string} searchInformation.formattedTotalResults
+					 * @property {number} searchInformation.searchTime
+					 * @property {string} searchInformation.totalResults
+					 */
+					let results;
+					try {
+						results = JSON.parse(body).items;
+					} catch (e) {
+						console.log(e);
+						console.log(body);
+						return null;
+					}
+
+					return results.map(function (result) {
+						return {
+							title: result.title || result.htmlTitle,
+							url: result.link || result.formattedUrl,
+							content: result.snippet || result.htmlSnippet
+						};
+					});
 				}
 			}
 		};
-
-		let requestUriArray = [];
-		let results = [];
-
-		for (let start = 0; start < this.maxSearchSize; start += 8) {
-			requestUriArray.push(`${this.queryServer}&start=${start}&q=${query}`);
-		}
-		let sequentialRequest = function(requestUriArray){
-			let targetUri = requestUriArray.shift();
-			if(targetUri){
-				options.uri = targetUri;
-				return request(options).then((record)=>{
-					results.push(record);
-					return sequentialRequest(requestUriArray);
-				}).catch(err=>{
-					console.error(err);
-					return sequentialRequest(requestUriArray);
-				});
-			}else{
-				return Promise.resolve(
-					results.reduce((p, r)=> {
-					if (!p || !r) return p || r;
-					return p.concat(r);
-				}));
-			}
-
-		};
-		return sequentialRequest(requestUriArray);
+		return searchStrategy[this.searchMethod];
 	}
 
 	/** @typedef {object} GoogleSearchRecord
@@ -98,6 +136,41 @@ class Recommend {
 	 * @property {string} title
 	 * @property {string} url
 	 */
+	/**
+	 *
+	 * @param {String} query
+	 * @return {Promise} results: GoogleSearchRecord[]
+	 */
+	makeQuery(query) {
+		let requestUriArray = [];
+		let results = [];
+
+		for (let start = 0; start < this.maxSearchSize; start += this.searchSize) {
+			requestUriArray.push(this.searchAPI.makeRequestOptions(start, query));
+		}
+		let sequentialRequest = function (requestOptionsArray) {
+			let option = requestOptionsArray.shift();
+			if (option) {
+				return request(option).then((record)=> {
+					results.push(record);
+					return sequentialRequest(requestOptionsArray);
+				}).catch(err=> {
+					console.error("@makeQuery.sequentialRequest",err);
+					return sequentialRequest(requestOptionsArray);
+				});
+			} else {
+				return Promise.resolve(
+					results.reduce((p, r)=> {
+						if (!p || !r) return p || r;
+						return p.concat(r);
+					}));
+			}
+
+		};
+		return sequentialRequest(requestUriArray);
+	}
+
+
 	/**
 	 *
 	 * @param {GoogleSearchRecord[]} records
@@ -161,7 +234,6 @@ let startTime = process.hrtime();
 let recommend = new Recommend();
 let query = "news";
 let userId = "7pXOuoYL";
-
 //recommend.rankResult(userId, query);
 
 process.on("exit", function () {
