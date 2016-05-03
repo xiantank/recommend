@@ -1,16 +1,16 @@
 "use strict";
 
 var expect = require('chai').expect;
+var sinon = require("sinon");
+var request = require("request-promise");
+
 var Recommend = require('../src/Recommend.js');
 
 describe("Recommend.js", function () {
-	this.timeout(5000);
-	let nock;
-	var fakeGoogleSearch = function(dataFormat){
-		nock = require("nock");
-		if (!nock.isActive()) { nock.activate(); }
-		dataFormat = dataFormat || "googleWebSearchAPI";
+	beforeEach(function () { //TODO add fakeGoogleSearch to sinon.stub
+		let userId = "7pXOuoYL";
 		let fakeData = {
+			interestListData: {"userId":"7pXOuoYL","subscribe":["email","orange","需要"],"keywords":["需要","開發框架"],"tags":[]},
 			googleWebSearchAPI: [
 				{"responseData": {"results": [{"GsearchResultClass": "GwebSearch","unescapedUrl": "https://news.google.com/","url": "https://news.google.com/","visibleUrl": "news.google.com","cacheUrl": "http://www.google.com/search?q\u003dcache:ozdoT-F6oa4J:news.google.com","title": "Google \u003cb\u003eNews\u003c/b\u003e","titleNoFormatting": "Google News","content": "Comprehensive up-to-date \u003cb\u003enews\u003c/b\u003e coverage, aggregated from sources all over the \nworld by Google \u003cb\u003eNews\u003c/b\u003e."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.foxnews.com/","url": "http://www.foxnews.com/","visibleUrl": "www.foxnews.com","cacheUrl": "http://www.google.com/search?q\u003dcache:Y_yXZK0On4AJ:www.foxnews.com","title": "Fox \u003cb\u003eNews\u003c/b\u003e - Breaking \u003cb\u003eNews\u003c/b\u003e Updates | Latest \u003cb\u003eNews\u003c/b\u003e Headlines \u003cb\u003e...\u003c/b\u003e","titleNoFormatting": "Fox News - Breaking News Updates | Latest News Headlines ...","content": "Offers worldwide \u003cb\u003enews\u003c/b\u003e coverage, analysis, show profiles, broadcast schedules, \nteam biographies, and email \u003cb\u003enews\u003c/b\u003e alerts."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.bbc.com/news","url": "http://www.bbc.com/news","visibleUrl": "www.bbc.com","cacheUrl": "http://www.google.com/search?q\u003dcache:mSK5l2l2Z8gJ:www.bbc.com","title": "Home - BBC \u003cb\u003eNews\u003c/b\u003e - BBC.com","titleNoFormatting": "Home - BBC News - BBC.com","content": "Sep 24, 2011 \u003cb\u003e...\u003c/b\u003e Visit BBC \u003cb\u003eNews\u003c/b\u003e for up-to-the-minute \u003cb\u003enews\u003c/b\u003e, breaking \u003cb\u003enews\u003c/b\u003e, video, audio and \nfeature stories. BBC \u003cb\u003eNews\u003c/b\u003e provides trusted World and UK \u003cb\u003enews\u003c/b\u003e as ..."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.cnn.com/","url": "http://www.cnn.com/","visibleUrl": "www.cnn.com","cacheUrl": "http://www.google.com/search?q\u003dcache:XBvJ7pr5NuMJ:www.cnn.com","title": "CNN - Breaking \u003cb\u003eNews\u003c/b\u003e, Latest \u003cb\u003eNews\u003c/b\u003e and Videos","titleNoFormatting": "CNN - Breaking News, Latest News and Videos","content": "View the latest \u003cb\u003enews\u003c/b\u003e and breaking \u003cb\u003enews\u003c/b\u003e today for U.S., world, weather, \nentertainment, politics and health at CNN.com."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://news.yahoo.com/","url": "http://news.yahoo.com/","visibleUrl": "news.yahoo.com","cacheUrl": "http://www.google.com/search?q\u003dcache:UBIfg2U5itIJ:news.yahoo.com","title": "Yahoo \u003cb\u003eNews\u003c/b\u003e - Latest \u003cb\u003eNews\u003c/b\u003e \u0026amp; Headlines","titleNoFormatting": "Yahoo News - Latest News \u0026amp; Headlines","content": "The latest \u003cb\u003enews\u003c/b\u003e and headlines from Yahoo! \u003cb\u003eNews\u003c/b\u003e. Get breaking \u003cb\u003enews\u003c/b\u003e stories and \nin-depth coverage with videos and photos."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://abcnews.go.com/","url": "http://abcnews.go.com/","visibleUrl": "abcnews.go.com","cacheUrl": "","title": "ABC \u003cb\u003eNews\u003c/b\u003e: Breaking \u003cb\u003eNews\u003c/b\u003e \u0026amp; Latest Headlines","titleNoFormatting": "ABC News: Breaking News \u0026amp; Latest Headlines","content": "Get breaking national and world \u003cb\u003enews\u003c/b\u003e, broadcast video coverage, and exclusive \ninterviews. Find the top \u003cb\u003enews\u003c/b\u003e online at ABC \u003cb\u003eNews\u003c/b\u003e."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.cnet.com/news/","url": "http://www.cnet.com/news/","visibleUrl": "www.cnet.com","cacheUrl": "http://www.google.com/search?q\u003dcache:fbMcCtGhOeEJ:www.cnet.com","title": "Technology \u003cb\u003eNews\u003c/b\u003e - CNET \u003cb\u003eNews\u003c/b\u003e - CNET","titleNoFormatting": "Technology News - CNET News - CNET","content": "CNET \u003cb\u003enews\u003c/b\u003e editors and reporters provide top technology \u003cb\u003enews\u003c/b\u003e, with investigative \nreporting and in-depth coverage of tech issues and events."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.usatoday.com/news/","url": "http://www.usatoday.com/news/","visibleUrl": "www.usatoday.com","cacheUrl": "http://www.google.com/search?q\u003dcache:zFIU3zPIRKUJ:www.usatoday.com","title": "The Latest US and World \u003cb\u003eNews\u003c/b\u003e - USATODAY.com","titleNoFormatting": "The Latest US and World News - USATODAY.com","content": "Get the latest national, international, and political \u003cb\u003enews\u003c/b\u003e at USATODAY.com."}],"cursor": {"resultCount": "895,000,000","pages": [{"start": "0", "label": 1}, {"start": "8", "label": 2}, {"start": "16","label": 3}, {"start": "24", "label": 4}, {"start": "32", "label": 5}, {"start": "40", "label": 6}, {"start": "48","label": 7}, {"start": "56", "label": 8}],"estimatedResultCount": "895000000","currentPageIndex": 0,"moreResultsUrl": "http://www.google.com/search?oe\u003dutf8\u0026ie\u003dutf8\u0026source\u003duds\u0026start\u003d0\u0026hl\u003dzh-TW\u0026q\u003dnews","searchResultTime": "0.13"}}, "responseDetails": null, "responseStatus": 200},
 				{"responseData": {"results": [{"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.nbcnews.com/","url": "http://www.nbcnews.com/","visibleUrl": "www.nbcnews.com","cacheUrl": "http://www.google.com/search?q\u003dcache:MeitRpLVG58J:www.nbcnews.com","title": "NBC \u003cb\u003eNews\u003c/b\u003e - Breaking \u003cb\u003eNews\u003c/b\u003e \u0026amp; Top Stories - Latest World, US \u003cb\u003e...\u003c/b\u003e","titleNoFormatting": "NBC News - Breaking News \u0026amp; Top Stories - Latest World, US ...","content": "Go to NBCNews.com for breaking \u003cb\u003enews\u003c/b\u003e, videos, and the latest top stories in \nworld \u003cb\u003enews\u003c/b\u003e, business, politics, health and pop culture."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.npr.org/sections/news/","url": "http://www.npr.org/sections/news/","visibleUrl": "www.npr.org","cacheUrl": "","title": "\u003cb\u003eNews\u003c/b\u003e: U.S. and World \u003cb\u003eNews\u003c/b\u003e Headlines : NPR","titleNoFormatting": "News: U.S. and World News Headlines : NPR","content": "US National Public Radio audio broadcast and text \u003cb\u003enews\u003c/b\u003e stories and \ncommentaries."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "https://www.rt.com/news/","url": "https://www.rt.com/news/","visibleUrl": "www.rt.com","cacheUrl": "http://www.google.com/search?q\u003dcache:oGNeqR_qz3oJ:www.rt.com","title": "\u003cb\u003eNews\u003c/b\u003e — RT - RT.com","titleNoFormatting": "News — RT - RT.com","content": "RT delivers latest \u003cb\u003enews\u003c/b\u003e and current events from around the world including \nspecial reports, entertainment \u003cb\u003enews\u003c/b\u003e and exclusive video."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.msn.com/en-us/news","url": "http://www.msn.com/en-us/news","visibleUrl": "www.msn.com","cacheUrl": "http://www.google.com/search?q\u003dcache:kKSbY2DQImMJ:www.msn.com","title": "\u003cb\u003eNews\u003c/b\u003e - MSN.com","titleNoFormatting": "News - MSN.com","content": "Find latest \u003cb\u003enews\u003c/b\u003e coverage of breaking \u003cb\u003enews\u003c/b\u003e events, trending topics, and \ncompelling articles, photos and videos of US and international \u003cb\u003enews\u003c/b\u003e stories."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.usnews.com/news","url": "http://www.usnews.com/news","visibleUrl": "www.usnews.com","cacheUrl": "http://www.google.com/search?q\u003dcache:1bIuyq92on0J:www.usnews.com","title": "Breaking National and World \u003cb\u003eNews\u003c/b\u003e | US \u003cb\u003eNews\u003c/b\u003e","titleNoFormatting": "Breaking National and World News | US News","content": "Get breaking \u003cb\u003enews\u003c/b\u003e headlines with the latest \u003cb\u003enews\u003c/b\u003e from the US and current world \n\u003cb\u003enews\u003c/b\u003e stories. Read about the US government and economy, the Obama ..."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.dallasnews.com/news/","url": "http://www.dallasnews.com/news/","visibleUrl": "www.dallasnews.com","cacheUrl": "http://www.google.com/search?q\u003dcache:lZP9QxKGSEsJ:www.dallasnews.com","title": "Dallas-Fort Worth Breaking \u003cb\u003eNews\u003c/b\u003e - \u003cb\u003eNews\u003c/b\u003e for Dallas, Texas","titleNoFormatting": "Dallas-Fort Worth Breaking News - News for Dallas, Texas","content": "Dallasnews.com is the official website for The Dallas Morning \u003cb\u003eNews\u003c/b\u003e newspaper. \nThis page contains Dallas-Fort Worth breaking \u003cb\u003enews\u003c/b\u003e, Texas \u003cb\u003enews\u003c/b\u003e, national ..."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "http://www.cbsnews.com/","url": "http://www.cbsnews.com/","visibleUrl": "www.cbsnews.com","cacheUrl": "http://www.google.com/search?q\u003dcache:btwqYIWXGHgJ:www.cbsnews.com","title": "CBS \u003cb\u003eNews\u003c/b\u003e - Breaking \u003cb\u003eNews\u003c/b\u003e, U.S., World, Business, Entertainment \u003cb\u003e...\u003c/b\u003e","titleNoFormatting": "CBS News - Breaking News, U.S., World, Business, Entertainment ...","content": "US and international \u003cb\u003enews\u003c/b\u003e. Features broadcasts, breaking \u003cb\u003enews\u003c/b\u003e, and special \nreports."}, {"GsearchResultClass": "GwebSearch","unescapedUrl": "https://www.reddit.com/r/news/","url": "https://www.reddit.com/r/news/","visibleUrl": "www.reddit.com","cacheUrl": "http://www.google.com/search?q\u003dcache:MeQkFM2o5PUJ:www.reddit.com","title": "All \u003cb\u003enews\u003c/b\u003e, US and international. - Reddit","titleNoFormatting": "All news, US and international. - Reddit","content": "is not \u003cb\u003enews\u003c/b\u003e; is an opinion/analysis or advocacy piece. primarily concerns ... If \nyour post doesn\u0026#39;t fit, consider finding an appropriate \u003cb\u003enews\u003c/b\u003e article on that story to ..."}],"cursor": {"resultCount": "895,000,000","pages": [{"start": "0", "label": 1}, {"start": "8", "label": 2}, {"start": "16","label": 3}, {"start": "24", "label": 4}, {"start": "32", "label": 5}, {"start": "40", "label": 6}, {"start": "48","label": 7}, {"start": "56", "label": 8}],"estimatedResultCount": "895000000","currentPageIndex": 1,"moreResultsUrl": "http://www.google.com/search?oe\u003dutf8\u0026ie\u003dutf8\u0026source\u003duds\u0026start\u003d8\u0026hl\u003dzh-TW\u0026q\u003dnews","searchResultTime": "0.32"}}, "responseDetails": null, "responseStatus": 200},
@@ -28,29 +28,69 @@ describe("Recommend.js", function () {
 				{"searchInformation": {"searchTime": 0.412942,"formattedSearchTime": "0.41","totalResults": "898000000","formattedTotalResults": "898,000,000"},"items": [{"title": "News | Science | AAAS","htmlTitle": "<b>News</b> | Science | AAAS","link": "https://www.sciencemag.org/news","snippet": "AAAS web magazine. Some free sample stories, subscription required for full text\n.","htmlSnippet": "AAAS web magazine. Some free sample stories, subscription required for full text<br>\n.","formattedUrl": "https://www.sciencemag.org/news"},{"title": "MSNBC: news, video and progressive community. Lean Forward.","htmlTitle": "MSNBC: <b>news</b>, video and progressive community. Lean Forward.","link": "http://www.msnbc.com/","snippet": "The shows you love, issues that matter: Rachel Maddow, Lawrence O'Donnell, \nChris Hayes, Chris Matthews, Al Sharpton, Ed Schultz, Joe Scarborough.","htmlSnippet": "The shows you love, issues that matter: Rachel Maddow, Lawrence O&#39;Donnell, <br>\nChris Hayes, Chris Matthews, Al Sharpton, Ed Schultz, Joe Scarborough.","formattedUrl": "www.msnbc.com/"},{"title": "Latest News | WIRED","htmlTitle": "Latest <b>News</b> | WIRED","link": "http://www.wired.com/latest-news","snippet": "May 1, 2016 . Your Simple (Yes, Simple) Guide to Quantum Entanglement . \nQuantum entanglement is thought to be one of the trickiest concepts in science, \nbut ...","htmlSnippet": "May 1, 2016 . Your Simple (Yes, Simple) Guide to Quantum Entanglement . <br>\nQuantum entanglement is thought to be one of the trickiest concepts in science, <br>\nbut&nbsp;...","formattedUrl": "www.wired.com/latest-news"},{"title": "Anne Hathaway Gives Birth to Baby Boy: Find Out His Name | E ...","htmlTitle": "Anne Hathaway Gives Birth to Baby Boy: Find Out His Name | E <b>...</b>","link": "http://www.eonline.com/news/747685/anne-hathaway-gives-birth-to-baby-boy-find-out-his-name","snippet": "Apr 7, 2016 ... The two welcomed a baby boy named Jonathan Rosebanks Shulman early on \nMarch 24 in Los Angeles, E! News has learned exclusively.","htmlSnippet": "Apr 7, 2016 <b>...</b> The two welcomed a baby boy named Jonathan Rosebanks Shulman early on <br>\nMarch 24 in Los Angeles, E! <b>News</b> has learned exclusively.","formattedUrl": "www.eonline.com/news/.../anne-hathaway-gives-birth-to-baby-boy-find-out- his-name"},{"title": "The Dallas Morning News | Dallas-Fort Worth News, Sports ...","htmlTitle": "The Dallas Morning <b>News</b> | Dallas-Fort Worth <b>News</b>, Sports <b>...</b>","link": "http://www.dallasnews.com/","snippet": "Dallasnews.com is the official website for The Dallas Morning News newspaper. \nThis page contains Dallas-Fort Worth breaking news, sports news, business ...","htmlSnippet": "Dallasnews.com is the official website for The Dallas Morning <b>News</b> newspaper. <br>\nThis page contains Dallas-Fort Worth breaking <b>news</b>, sports <b>news</b>, business&nbsp;...","formattedUrl": "www.dallasnews.com/"},{"title": "Discovery News","htmlTitle": "Discovery <b>News</b>","link": "http://news.discovery.com/","snippet": "Discovery News digs deep into our world's mysteries. Join us to explore current \nevents and uncover the science behind the headlines. We Dig. You Discover.","htmlSnippet": "Discovery <b>News</b> digs deep into our world&#39;s mysteries. Join us to explore current <br>\nevents and uncover the science behind the headlines. We Dig. You Discover.","formattedUrl": "news.discovery.com/"},{"title": "News - Al Jazeera English","htmlTitle": "<b>News</b> - Al Jazeera English","link": "http://www.aljazeera.com/news/","snippet": "Latest news headlines, current events, photos, and exclusive stories from \neyewitnesses in Asia, Middle East, and Africa.","htmlSnippet": "Latest <b>news</b> headlines, current events, photos, and exclusive stories from <br>\neyewitnesses in Asia, Middle East, and Africa.","formattedUrl": "www.aljazeera.com/news/"},{"title": "Science News | Daily news articles, blogs and biweekly magazine ...","htmlTitle": "Science <b>News</b> | Daily <b>news</b> articles, blogs and biweekly magazine <b>...</b>","link": "https://www.sciencenews.org/","snippet": "Science News online features daily news, blogs, feature stories, reviews and \nmore in all disciplines of science, as well as Science News magazine archives ...","htmlSnippet": "Science <b>News</b> online features daily <b>news</b>, blogs, feature stories, reviews and <br>\nmore in all disciplines of science, as well as Science <b>News</b> magazine archives&nbsp;...","formattedUrl": "https://www.sciencenews.org/"},{"title": "CNN - Breaking News, U.S., World, Weather, Entertainment & Video ...","htmlTitle": "CNN - Breaking <b>News</b>, U.S., World, Weather, Entertainment &amp; Video <b>...</b>","link": "http://edition.cnn.com/","snippet": "Find the latest breaking news and information on the top stories, weather, \nbusiness, entertainment, politics, and more. For in-depth coverage, CNN \nprovides ...","htmlSnippet": "Find the latest breaking <b>news</b> and information on the top stories, weather, <br>\nbusiness, entertainment, politics, and more. For in-depth coverage, CNN <br>\nprovides&nbsp;...","formattedUrl": "edition.cnn.com/"},{"title": "News - Around the NFL - NFL.com","htmlTitle": "<b>News</b> - Around the NFL - NFL.com","link": "http://www.nfl.com/news","snippet": "Nothing produces emotion like a prospect getting drafted. Take a look at the best \nphotos from the Auditorium Theatre in Chicago from the 2016 NFL Draft. View.","htmlSnippet": "Nothing produces emotion like a prospect getting drafted. Take a look at the best <br>\nphotos from the Auditorium Theatre in Chicago from the 2016 NFL Draft. View.","formattedUrl": "www.nfl.com/news"}]}
 			]
 		};
-		let targetUri = {
-			googleWebSearchAPI: "https://ajax.googleapis.com",
-			googleCustomSearchAPI: "https://www.googleapis.com"
-		};
+		let fakeRequestGet = sinon.stub(request, "get", function (options) {
+			if (typeof options === "string") {
+				let userId = "7pXOuoYL";
+				if (options === `http://tan.csie.io:2234/${userId}/personal/`) {
+					return Promise.resolve(JSON.stringify(fakeData.interestListData));
+				}
+			} else if (typeof options === "object") {
+				if (options.uri === "https://ajax.googleapis.com/ajax/services/search/web") {
+					let transform = function (body) {
+						let results;
+						try {
+							results = JSON.parse(body).responseData.results;
+						} catch (e) {
+							console.log(e);
+							console.log(body);
+							return null;
+						}
 
-		let googleSearchNews = nock(targetUri[dataFormat])
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][0]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][1]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][2]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][3]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][4]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][5]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][6]), {"content-type": "text/javascript"})
-			.get(()=>true).reply(200, JSON.stringify(fakeData[dataFormat][7]), {"content-type": "text/javascript"});
+						return results.map(function (result) {
+							return {
+								title: result.titleNoFormatting || result.title,
+								url: result.url,
+								content: result.content
+							};
+						});
+					};
+					let recordIndex = (options.qs || 0) && options.qs.start / (options.qs.rsz || 8);
+					let fakeResult = JSON.stringify(fakeData.googleWebSearchAPI[recordIndex]);
+					return Promise.resolve(fakeResult).then(transform);
+				} else if (options.uri === "https://www.googleapis.com/customsearch/v1") {
+					let recordIndex = (options.qs || 0) && ((options.qs.start - 1) / (options.qs.count || 10));
+					let transform = function (body) {
+						let results;
+						try {
+							results = JSON.parse(body).items;
+						} catch (e) {
+							console.log(e);
+							console.log(body);
+							return null;
+						}
 
-	};
-	let fakeGoogleSearchRestore= function(){
-		if(nock){
-			nock.cleanAll();
-			nock.restore();
-			nock = undefined;
-		}
-	};
+						return results.map(function (result) {
+							return {
+								title: result.title || result.htmlTitle,
+								url: result.link || result.formattedUrl,
+								content: result.snippet || result.htmlSnippet
+							};
+						});
+					};
+					let fakeResult = JSON.stringify(fakeData.googleCustomSearchAPI[recordIndex]);
+					return Promise.resolve(fakeResult).then(transform);
+				} else {
+					throw `@fakeRequestGet: match fail url: ${options.uri}`;
+				}
+			} else {
+				throw `@fakeRequestGet: unknown type options: ${@fakeRequestGet}`;
+			}
+		});
+	});
+	afterEach(function () {
+		request.get.restore();
+	});
+	this.timeout(5000);
 
 	it("Recommend.getKeywords", function (done) {
 		let recommend = new Recommend();
@@ -77,24 +117,26 @@ describe("Recommend.js", function () {
 
 	});
 
-	it('Recommend.getInterest("7pXOuoYL")', function(done){
+	it('Recommend.getInterest("7pXOuoYL")', function (done) {
 		let recommend = new Recommend();
 		let userId = "7pXOuoYL";
-		recommend.getInterest(userId).then(results=>{
+
+		return recommend.getInterest(userId).then(results=> {
+			expect(results.subscribe).to.have.lengthOf(3);
 			expect(results).to.be.a("object");
 			expect(results.userId).is.equal(userId);
 			expect(results.keywords).to.be.instanceof(Array);
 			expect(results.tags).to.be.instanceof(Array);
 			expect(results.subscribe).to.be.instanceof(Array);
 			done();
-		});
+		}).catch(err=>console.log(err));
 	});
-	describe("Recommend.makeQuery()",function(){
+	describe("Recommend.makeQuery()", function () {
 		it("#googleWebSearchAPI", function (done) {
 			let recommend = new Recommend();
 
 			let query = "news";
-			fakeGoogleSearch("googleWebSearchAPI");
+			//fakeGoogleSearch("googleWebSearchAPI");
 
 			recommend.makeQuery(query).then((queryResults)=> {
 				expect(queryResults).is.instanceOf(Array);
@@ -102,14 +144,14 @@ describe("Recommend.js", function () {
 				expect(queryResults[0]).to.have.property("title");
 				expect(queryResults[0]).to.have.property("url");
 				expect(queryResults[0]).to.have.property("content");
-				fakeGoogleSearchRestore();
+				//fakeGoogleSearchRestore();
 				done();
 				return true;
 			}).catch(err=>console.log("[error]:", err));
 		});
-		it("#googleCustomSearchAPI",function(done){
+		it("#googleCustomSearchAPI", function (done) {
 
-			fakeGoogleSearch("googleCustomSearchAPI");
+			//fakeGoogleSearch("googleCustomSearchAPI");
 			let recommend = new Recommend({
 				maxSearchSize: 40,
 				searchSize: 10,
@@ -117,17 +159,42 @@ describe("Recommend.js", function () {
 			});
 			let query = "news";
 
-			recommend.makeQuery(query).then((queryResults)=> {
+			return recommend.makeQuery(query).then((queryResults)=> {
 				expect(queryResults).is.instanceOf(Array);
 				expect(queryResults).to.have.lengthOf(recommend.maxSearchSize);
 				expect(queryResults[0]).to.have.property("title");
 				expect(queryResults[0]).to.have.property("url");
 				expect(queryResults[0]).to.have.property("content");
-				fakeGoogleSearchRestore();
+				//fakeGoogleSearchRestore();
 				done();
 				return true;
-			}).catch(err=>console.log("[error]:", err));
+			});
 		});
+	});
+	describe("Recommend.rankResult()", function () {
+		it("#rankByScoringKeywords", function (done) {
+
+			let query = "news";
+			let userId = "7pXOuoYL";
+			//fakeGoogleSearch("googleCustomSearchAPI");
+			let recommend = new Recommend({
+				maxSearchSize: 40,
+				searchSize: 10,
+				searchMethod: "googleCustomSearchAPI"
+			});
+
+			return recommend.rankResult(userId, query).then((queryResults)=> {
+				expect(queryResults).is.instanceOf(Array);
+				expect(queryResults).to.have.lengthOf(recommend.maxSearchSize);
+				expect(queryResults[0]).to.have.property("title");
+				expect(queryResults[0]).to.have.property("url");
+				expect(queryResults[0]).to.have.property("content");
+				expect(queryResults[0]).to.have.property("finalScore");
+				//fakeGoogleSearchRestore();
+				done();
+				return true;
+			});
+		})
 	});
 
 
