@@ -17,7 +17,8 @@ class Recommend {
 		this.searchSize = options.searchSize || 8;
 		this.searchMethod = options.searchMethod || "googleWebSearchAPI";
 	}
-	get searchAPI(){
+
+	get searchAPI() {
 		let that = this;
 		let searchStrategy = {
 			/**
@@ -87,7 +88,7 @@ class Recommend {
 						fields: "searchInformation,items(title,htmlTitle,link,formattedUrl,snippet,htmlSnippet)",
 						key: that.cseKey,
 						cx: that.cseCx,
-						start: start+1,
+						start: start + 1,
 						q: query
 					};
 					options.simple = false;
@@ -142,20 +143,20 @@ class Recommend {
 	 * @return {Promise} results: GoogleSearchRecord[]
 	 */
 	makeQuery(query) {
-		let requestUriArray = [];
+		let requestOptionsArray = [];
 		let results = [];
 
 		for (let start = 0; start < this.maxSearchSize; start += this.searchSize) {
-			requestUriArray.push(this.searchAPI.makeRequestOptions(start, query));
+			requestOptionsArray.push(this.searchAPI.makeRequestOptions(start, query));
 		}
 		let sequentialRequest = function (requestOptionsArray) {
 			let option = requestOptionsArray.shift();
 			if (option) {
-				return request(option).then((record)=> {
+				return request.get(option).then((record)=> {
 					results.push(record);
 					return sequentialRequest(requestOptionsArray);
 				}).catch(err=> {
-					console.error("@makeQuery.sequentialRequest",err);
+					console.error("@makeQuery.sequentialRequest", err);
 					return sequentialRequest(requestOptionsArray);
 				});
 			} else {
@@ -167,7 +168,7 @@ class Recommend {
 			}
 
 		};
-		return sequentialRequest(requestUriArray);
+		return sequentialRequest(requestOptionsArray);
 	}
 
 
@@ -215,7 +216,7 @@ class Recommend {
 	 */
 	getInterest(userId) {
 		var uri = `http://tan.csie.io:2234/${userId}/personal/`;
-		return request(uri).then(body=>JSON.parse(body));
+		return request.get(uri).then(body=>JSON.parse(body));
 	}
 
 	rankResult(userId, query) {
@@ -225,19 +226,51 @@ class Recommend {
 		]).then((results)=> {
 			let queryResult = results[0];
 			let interestList = results[1];
+			return this.rankByScoringKeywords(queryResult, interestList);
+		})//.catch(e=>console.log(e));
+	}
+
+	rankByScoringKeywords(queryResult, interestList) {
+		let termScoreMap = new Map();
+		for (let key in interestList) {
+			if (!interestList.hasOwnProperty(key)) continue;
+			let terms = interestList[key];
+			if (!Array.isArray(terms)) {
+				continue;
+			}
+			for (let term of terms) {
+				termScoreMap.set(term, 1.1);
+			}
+		}
+		let totalNum = this.maxSearchSize;
+		queryResult = queryResult.map((record, index)=> {
+			record.baseScore = 1 + (1 - index / totalNum) * 0.5;
+			record.finalScore = record.baseScore;
+			for (let term of record.keywords) {
+				let score;
+				if (score = termScoreMap.get(term)) {
+					record.finalScore *= score;
+				}
+			}
+			return record;
 		});
+		queryResult = queryResult.sort((a, b) => {
+			return b.finalScore - a.finalScore;
+		});
+		fs.writeFile("sorted_query_news_byScoringKeywords.json", JSON.stringify(queryResult, null, 4));
+		return queryResult;
+
 	}
 
 
 }
-let startTime = process.hrtime();
-let recommend = new Recommend();
-let query = "news";
-let userId = "7pXOuoYL";
+// let recommend = new Recommend({
+// 	maxSearchSize: 40,
+// 	searchSize: 10,
+// 	searchMethod: "googleCustomSearchAPI"
+// });
+// let query = "news";
+// let userId = "7pXOuoYL";
 //recommend.rankResult(userId, query);
 
-process.on("exit", function () {
-	let passTime = process.hrtime(startTime);
-	console.log((passTime[0] * 1000 + passTime[1] / 1000000) + "ms");
-});
 module.exports = Recommend;
