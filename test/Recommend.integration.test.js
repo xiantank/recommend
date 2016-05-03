@@ -83,7 +83,7 @@ describe("Recommend.js", function () {
 					throw `@fakeRequestGet: match fail url: ${options.uri}`;
 				}
 			} else {
-				throw `@fakeRequestGet: unknown type options: ${@fakeRequestGet}`;
+				throw `@fakeRequestGet: unknown type options: ${fakeRequestGet}`;
 			}
 		});
 	});
