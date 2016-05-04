@@ -4,18 +4,21 @@
 "use strict";
 var request = require("request-promise");
 var fs = require("fs");
-var privateKey = require("../privateKey.json");
 /**
  * @class
  */
 class Recommend {
 	constructor(options) {
 		options = options || {};
-		this.cseKey = privateKey.cseKey;
-		this.cseCx = privateKey.cseCx;
+
+
 		this.maxSearchSize = options.maxSearchSize || 40;
 		this.searchSize = options.searchSize || 8;
 		this.searchMethod = options.searchMethod || "googleWebSearchAPI";
+		if (options.searchMethod === "googleCustomSearchAPI") {
+			this.cseKey = options.cseKey;
+			this.cseCx = options.cseCx;
+		}
 	}
 
 	get searchAPI() {
@@ -89,6 +92,7 @@ class Recommend {
 						key: that.cseKey,
 						cx: that.cseCx,
 						start: start + 1,
+						gl: "tw",
 						q: query
 					};
 					options.simple = false;
