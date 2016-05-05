@@ -1,1 +1,1 @@
-module.exports = require("./Recommend");
+module.exports = require("./src/Recommend");
