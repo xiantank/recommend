@@ -12,7 +12,7 @@ class Recommend {
 		options = options || {};
 
 
-		this.maxSearchSize = options.maxSearchSize || 40;
+		this.searchPage = options.searchPage || 2;
 		this.searchSize = options.searchSize || 8;
 		this.searchMethod = options.searchMethod || "googleWebSearchAPI";
 		if (options.searchMethod === "googleCustomSearchAPI") {
@@ -150,8 +150,8 @@ class Recommend {
 		let requestOptionsArray = [];
 		let results = [];
 
-		for (let start = 0; start < this.maxSearchSize; start += this.searchSize) {
-			requestOptionsArray.push(this.searchAPI.makeRequestOptions(start, query));
+		for (let start = 0; start < this.searchPage; start++) {
+			requestOptionsArray.push(this.searchAPI.makeRequestOptions(start * this.searchSize, query));
 		}
 		let sequentialRequest = function (requestOptionsArray) {
 			let option = requestOptionsArray.shift();
@@ -246,7 +246,7 @@ class Recommend {
 				termScoreMap.set(term, 1.1);
 			}
 		}
-		let totalNum = this.maxSearchSize;
+		let totalNum = this.searchPage * this.searchSize;
 		queryResult = queryResult.map((record, index)=> {
 			record.baseScore = 1 + (1 - index / totalNum) * 0.5;
 			record.finalScore = record.baseScore;
@@ -261,7 +261,6 @@ class Recommend {
 		queryResult = queryResult.sort((a, b) => {
 			return b.finalScore - a.finalScore;
 		});
-		fs.writeFile("sorted_query_news_byScoringKeywords.json", JSON.stringify(queryResult, null, 4));
 		return queryResult;
 
 	}

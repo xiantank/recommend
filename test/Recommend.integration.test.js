@@ -140,7 +140,7 @@ describe("Recommend.js", function () {
 
 			recommend.makeQuery(query).then((queryResults)=> {
 				expect(queryResults).is.instanceOf(Array);
-				expect(queryResults).to.have.lengthOf(recommend.maxSearchSize);
+				expect(queryResults).to.have.lengthOf(recommend.searchPage * recommend.searchSize);
 				expect(queryResults[0]).to.have.property("title");
 				expect(queryResults[0]).to.have.property("url");
 				expect(queryResults[0]).to.have.property("content");
@@ -153,7 +153,7 @@ describe("Recommend.js", function () {
 
 			//fakeGoogleSearch("googleCustomSearchAPI");
 			let recommend = new Recommend({
-				maxSearchSize: 40,
+				searchPage: 3,
 				searchSize: 10,
 				searchMethod: "googleCustomSearchAPI"
 			});
@@ -161,7 +161,7 @@ describe("Recommend.js", function () {
 
 			return recommend.makeQuery(query).then((queryResults)=> {
 				expect(queryResults).is.instanceOf(Array);
-				expect(queryResults).to.have.lengthOf(recommend.maxSearchSize);
+				expect(queryResults).to.have.lengthOf(recommend.searchPage*recommend.searchSize);
 				expect(queryResults[0]).to.have.property("title");
 				expect(queryResults[0]).to.have.property("url");
 				expect(queryResults[0]).to.have.property("content");
@@ -178,14 +178,14 @@ describe("Recommend.js", function () {
 			let userId = "7pXOuoYL";
 			//fakeGoogleSearch("googleCustomSearchAPI");
 			let recommend = new Recommend({
-				maxSearchSize: 40,
+				searchPage: 3,
 				searchSize: 10,
 				searchMethod: "googleCustomSearchAPI"
 			});
 
 			return recommend.rankResult(userId, query).then((queryResults)=> {
 				expect(queryResults).is.instanceOf(Array);
-				expect(queryResults).to.have.lengthOf(recommend.maxSearchSize);
+				expect(queryResults).to.have.lengthOf(recommend.searchPage * recommend.searchSize);
 				expect(queryResults[0]).to.have.property("title");
 				expect(queryResults[0]).to.have.property("url");
 				expect(queryResults[0]).to.have.property("content");
