@@ -3,3 +3,10 @@ node_js:
   - "6"
   - "5"
   - "4"
+
+notifications:
+  email:
+    recipients:
+      - david1992309@gmail.com
+    on_success: always
+    on_failure: always
